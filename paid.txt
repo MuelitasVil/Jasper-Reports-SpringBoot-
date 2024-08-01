@@ -1,0 +1,7 @@
+{
+  "voucher_id": "12345",
+  "Amount_Paid": 1000,
+  "Payment_method": "Tarjeta de Credito",
+  "parent_name": "John Doe",
+  "child_name": "Jane Doe"
+}
