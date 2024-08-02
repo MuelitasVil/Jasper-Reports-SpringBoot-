@@ -4,6 +4,12 @@ import com.jasper_reports.demo.model.Company;
 import com.jasper_reports.demo.model.Employee;
 import com.jasper_reports.demo.model.PaidEmploye;
 import com.jasper_reports.demo.service.ReportService;
+
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.JRField;
+import net.sf.jasperreports.engine.data.JRBeanArrayDataSource;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+
 import com.jasper_reports.demo.model.ReportRequest;
 
 import org.apache.tomcat.util.http.parser.MediaType;
@@ -34,29 +40,42 @@ public class ReportController {
             @RequestBody ReportRequest reportRequest) {
 
         try {
+
+            
             // Extrae la información de empresa y empleados del request
             Company company = reportRequest.getCompany();
             List<Employee> employees = reportRequest.getEmployees();
+            
+            Employee e = new Employee();
+            employees.add(0, e);
 
             // Prepara los parámetros para el reporte
+            JRBeanArrayDataSource dataSource = new JRBeanArrayDataSource(employees.toArray());
+
+            System.out.println(dataSource.toString());
+
             Map<String, Object> parameters = new HashMap<>();
+            parameters.put("DataSource", dataSource);
             parameters.put("P_empresa", company.getName());
             parameters.put("P_correo", company.getAddress());
             // Agrega otros parámetros si es necesario
 
-            System.out.println("AAAAAAAAAAAAAA");
-            byte[] reportBytes = reportService.generateEmployeeReport(employees, parameters);
-            System.out.println("AAAAAAAAAAAAAA");
+            byte[] reportBytes = reportService.generateEmployeeReport(dataSource, parameters);
 
-            // Configura los encabezados para la respuesta
+            System.out.println("4");
+            //Convert the byte array to an InputStreamResource
+            ByteArrayInputStream bis = new ByteArrayInputStream(reportBytes);
+            System.out.println("5");
+            InputStreamResource resource = new InputStreamResource(bis);
+            System.out.println("6");
+
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employee_report.pdf");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=ReportPaid.pdf");
 
-            // Devuelve el archivo PDF generado
             return ResponseEntity.ok()
                     .headers(headers)
                     .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
-                    .body(new InputStreamResource(new ByteArrayInputStream(reportBytes)));
+                    .body(resource);
 
         } catch (Exception e) {
             // Manejo de errores
